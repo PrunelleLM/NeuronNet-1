@@ -135,20 +135,21 @@ std::set<size_t> Network::step(const std::vector<double>& t) {
 		if (neurons[i].firing()) {
 			firing_neurons.insert(i);
 			neurons[i].reset();
-		}	
-	}
+		}
+	}	
+	
 	for(size_t i(0); i<neurons.size(); ++i) {
 		double to_add(0);
-		double to_remove(0);
 		double total_intensity(0);
-		double thalamic(t[i]); 
+		double to_remove(0);
+		double thalamic(t[i]);
 		if (neurons[i].is_inhibitory()) {
-		thalamic *= 0.4;
+			thalamic *= 0.4;
 		}
 		std::vector<std::pair<size_t, double> > neurons_connected = neighbors(i);
 		for (size_t j(0); j<neurons_connected.size(); ++j) {
 			if (firing_neurons.count(j) == 1) {
-				if(neurons[j].is_inhibitory()) {	
+				if(neurons[j].is_inhibitory()){
 					to_remove += (neurons_connected[j]).second;
 				} else {
 					to_add += (neurons_connected[j]).second;
@@ -156,33 +157,30 @@ std::set<size_t> Network::step(const std::vector<double>& t) {
 			}
 		}
 		total_intensity = thalamic + 0.5*to_add + to_remove;
-		neurons[i].input(total_intensity); //updater le potentiel  
+		neurons[i].input(total_intensity); 
 		neurons[i].step();
-	}	 
+	}
+
 	return firing_neurons;
 }
 
 std::vector<std::pair<size_t, double> > Network::neighbors(const size_t& n) const {
 	
 	std::vector<std::pair<size_t, double> > neurons_connected;
-	for (std::map<std::pair<size_t, size_t>, double>::const_iterator it=links.lower_bound({n,0}); it!=links.end() and ((it->first).first == n); ++it) {
+	for (std::map<std::pair<size_t, size_t>, double>::const_iterator it=links.lower_bound({n,0}); it!=links.end() and ((it->first).first ==n) ; ++it) {
 		std::pair<size_t, double> to_insert((it->first).second, it->second);
 		neurons_connected.push_back(to_insert);
 	}
 	
-	return neurons_connected;
-		
+	return neurons_connected;	
 }
 
 std::pair<size_t, double> Network::degree(const size_t& n) const {
 	std::vector<std::pair<size_t, double> > neurons_connected = neighbors(n);
 	double total_intensity(0);
 	for (size_t i(0); i<neurons_connected.size(); ++i) {
-		total_intensity += (neurons_connected[i]).second;
+		total_intensity += neurons_connected[i].second;
 	}
 	
-	
-	
 	return std::pair<size_t, double> (neurons_connected.size(), total_intensity);
-
 }
